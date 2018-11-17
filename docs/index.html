@@ -1,7 +1,775 @@
+<!DOCTYPE html> 
 <html>
 <head>
+    <meta charset="utf-8">
+	<title>CHORD PAD</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="themes/mytheme.min.css" />
+    <link rel="stylesheet" href="themes/jquery.mobile.icons.min.css" />
+    <link rel="stylesheet" href="lib/jquery.mobile-1.4.5/jquery.mobile.structure-1.4.5.min.css" />
+    <!--
+	<link rel="stylesheet" href="./lib/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+	-->
+	<script src="lib/jquery-1.11.1.min.js"></script>
+	<script src="lib/jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    <script type="text/javascript">
+
+    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    // Create the instance of AudioContext
+    var audioContext = new AudioContext();
+    
+    var oscillatorArray = [];
+    
+    // for legacy browsers
+    audioContext.createGain = audioContext.createGain || audioContext.createGainNode;    
+
+
+
+
+    function playchord(freqArray) {
+    
+        //var freqArray = [262, 330, 392];
+    
+        stopplay();
+    
+        // remove all
+        oscillatorArray.length = 0;
+    
+        for (var i = 0; i < freqArray.length;i++) {
+           var freq = freqArray[i];
+           // Create the instance of OscillatorNode
+           var oscillator = audioContext.createOscillator();
+    
+           // for legacy browsers
+           oscillator.start = oscillator.start || oscillator.noteOn;
+           oscillator.stop  = oscillator.stop  || oscillator.noteOff;
+           
+           // Set parameters
+           //oscillator.type            = (typeof oscillator.type === 'string') ? 'square' : 1;  // Square wave
+           oscillator.type            = (typeof oscillator.type === 'string') ? 'sine' : 1;  // Sine
+           oscillator.frequency.value = freq;  // 880 Hz
+           oscillator.detune.value    = 10;  // 100 cent
+           oscillatorArray.push(oscillator);
+        }
+        
+        // Create the instance of GainNode
+        var gain = audioContext.createGain();
+    
+        for (var i = 0;i<oscillatorArray.length;i++) {
+            // OscillatorNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
+            oscillatorArray[i].connect(gain);
+        }
+    
+        gain.connect(audioContext.destination);
+        
+        // var gain2 = context.createGain();
+        // oscillator2.connect(gain2);
+        // gain2.connect(context.destination);
+        
+        for (var i = 0;i<oscillatorArray.length;i++) {
+            // Start sound
+            oscillatorArray[i].start(0);
+        }
+    
+    }
+
+    function playnotes(notes) {
+    
+        //var notes = ["C4", "E4", "G4"];
+        
+        var freq = [];
+        
+        for (var i = 0; i < notes.length; i++) {
+            // detect note
+            var note = notes[i];
+            
+            note = note.replace(/[0-9]/, "");
+            var note_idx = mycontext.notes.indexOf(note);
+            
+            // detect octave
+            var octave = notes[i];
+            octave = octave.replace(/[a-zA-Z#]+/, "");
+            
+            var octave_int = parseInt(octave);
+            
+            // "C0"'s note_nth is 0, "A4"'s note_nth is 12 * 4 + 9 = 57
+            console.log("octave_int:" + octave_int );
+            console.log("note_idx:" + note_idx );
+            
+            var note_nth = octave_int * 12 + note_idx;
+            
+            console.log("note_nth:" + note_nth );
+            
+            // G#4 => -1
+            // A4 => 0
+            // A#4 => 1
+            
+            var frequency = 440 * Math.pow(2, (note_nth - 57)/12);
+            freq.push(frequency);
+        }
+        console.log(freq);
+        
+        playchord(freq);
+    }
+
+    
+    function stopplay() {
+        for (var i = 0;i<oscillatorArray.length;i++) {
+            // Start sound
+            oscillatorArray[i].stop(0);
+        }
+    }
+
+
+
+    var mycontext = new Object();    
+    mycontext.notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    mycontext.chordtypes = [
+        ["(Major)",0,4,7],
+        ["m",0,3,7],
+        ["7",0,4,7,10],
+        ["7-9",0,4,7,10,13],
+        ["m7",0,3,7,10],
+        ["m7-5",0,3,6,10],
+        ["M7",0,4,7,11],
+        ["mM7",0,3,7,11],
+        ["sus4",0,5,7],
+        ["dim",0,3,6],
+        ["dim7",0,3,6,9],
+        ["aug",0,4,8],
+        ["aug7",0,4,8,10],
+        ["aug7-9",0,4,8,10,13],
+        ["6",0,4,7,9],
+        ["add9",0,4,7,14],
+        ["9",0,4,7,10,14],
+        ["-5",0,4,6]
+    ];
+
+    mycontext.chordsets = [];
+    mycontext.default_chordsets = [
+        {
+            "name" : "Chord Set 1",
+            "chords" : [
+                {"name":"C",    "notes":["C4", "E4", "G4"]},
+                {"name":"Em",   "notes":["E4", "G4", "B4"]},
+                {"name":"F",    "notes":["F4", "A4", "C5"]},
+                {"name":"G",    "notes":["G4", "B4", "D5"]},
+                {"name":"Am",   "notes":["A4", "C5", "E5"]},
+                {"name":"Bdim", "notes":["B4", "D5", "F5"]},
+            ]
+        },
+        {
+            "name" : "Chord Set 2",
+            "chords" : [
+                {"name":"C",    "notes":["C4", "E4", "G4"]},
+                {"name":"Em",   "notes":["E4", "G4", "B4"]},
+                {"name":"F",    "notes":["F4", "A4", "C5"]},
+                {"name":"G",    "notes":["G4", "B4", "D5"]},
+                {"name":"Am",   "notes":["A4", "C5", "E5"]},
+                {"name":"Bdim", "notes":["B5", "D5", "F5"]},
+            ]
+        }
+    ];
+
+
+
+    function initPlayPage() {
+        var i = mycontext["current_chord_set"];
+        var chordset = mycontext.chordsets[i];
+        console.log("hey");
+
+        if (chordset == null) {
+            return;
+        }
+
+        console.log("hey");
+        console.log(chordset);
+        var chords = chordset["chords"];
+
+        $("#play-buttons *").remove();
+        
+        if (chords != null && chords.length > 0) {
+            // create divs
+            for(var j = 0;j < chords.length;j++) {
+                var rownum = Math.floor(j / 3);
+                // add ui-grid-b div 
+                if (j % 3 == 0) {
+                    $("#play-buttons").append("<div class='ui-grid-b' id='play-row-" + rownum + "' />");
+                }
+                
+                var column_class = j % 3 == 0 ? "ui-block-a" : j % 3 == 1 ? "ui-block-b" : "ui-block-c";
+                
+                var chord = chords[j];
+                
+                var btnid = "btn" + j;
+                
+                // add button
+                $("#play-row-" + rownum).append(
+                    "<div class='COLUMN_CLASS'><div class='ui-btn' id='BUTTON_ID'>CHORD</div></div>"
+                    .replace("COLUMN_CLASS", column_class)
+                    .replace("CHORD", chord["name"])
+                    .replace("BUTTON_ID", btnid)
+                    );
+            }
+            
+            // set event handlers
+            for (var j = 0;j < chords.length;j++) {
+                var chord = chords[j];
+                var btnid = "#btn" + j;
+
+                console.log(btnid);
+                console.log($(btnid));
+
+                $(btnid).on("vmousedown", function(notes) {
+                    return function(event) {
+                        console.log(event);
+                        console.log(notes);
+                        playnotes(notes);
+                    };
+                }(chord["notes"]));
+            
+                $(btnid).on("vmouseup", function(event) {
+                    //console.log(event);
+                    stopplay();
+                });
+            
+                $(btnid).on("vmouseout", function(event) {
+                    //console.log(event);
+                    stopplay();
+                });
+            }
+        }
+    }
+
+    function initTopSelectChordset() {
+        console.log("initTopSelectChordset");
+        $("#top_chordset > option").remove();
+        
+        for ( var i = 0; i < mycontext.chordsets.length; i++ ) {
+            var chordset = mycontext.chordsets[i];
+            $("#top_chordset").append("<option value=\"" + i + "\">" + chordset["name"] + "</option>");
+        }
+        $("#top_chordset").val("0");
+        
+        console.log($("#top_chordset"));
+    }
+
+    function initTopPage() {
+        alert("initTopPage");
+        
+    }
+
+    function initEditPage() {
+        resetChordset();
+
+        // initialize edit_select_root
+        $("#edit_select_root *").remove();
+        $("#edit_select_root").append("<option value='-1'></option>");
+        for ( var i = 0; i < mycontext.notes.length; i++ ) {
+            var note = mycontext.notes[i];
+            $("#edit_select_root").append("<option value='NO'>NOTE</option>".replace("NO", i).replace("NOTE", note));
+        }
+        $("#edit_select_root").val(-1);
+        
+        // initialize edit_select_chordtype
+        $("#edit_select_chordtype *").remove();
+        $("#edit_select_chordtype").append("<option value='-1'></option>");
+        for ( var i = 0; i < mycontext.chordtypes.length; i++ ) {
+            var chordtype = mycontext.chordtypes[i][0];
+            $("#edit_select_chordtype").append("<option value='NO'>CHORDTYPE</option>".replace("NO", i).replace("CHORDTYPE", chordtype));
+        }
+        $("#edit_select_chordtype").val(-1);
+    }
+
+    function saveChordset() {
+        var i = mycontext["current_chord_set"];
+        if (mycontext.chordsets[i] == null) {
+            return;
+        }
+        
+        var chordset = mycontext["edit_chord_set"];
+        var copy = $.extend(true, {}, chordset);
+        
+        mycontext.chordsets.splice(i, 1, copy);
+    }
+
+    function resetChordset() {
+        var i = mycontext["current_chord_set"];
+        var selected = mycontext.chordsets[i];
+
+        if (selected == null) {
+            return;
+        }
+        
+        var chordset = $.extend(true, {}, selected);
+        mycontext["edit_chord_set"] = chordset;
+
+        $("#edit_input_chordset_name").val(chordset.name);
+
+        // chordset.chords;
+        $("#edit_select_chord *").remove();
+        $("#edit_select_chord").append("<option value='-1'></option>");
+        for ( var j = 0; j < chordset.chords.length; j++) {
+            $("#edit_select_chord").append("<option value='VALUE'>LABEL</option>".replace("VALUE", j).replace("LABEL", chordset.chords[j].name));
+        }
+        $("#edit_select_chord").val(-1); //.selectmenu('refresh');
+        
+        $("#edit_input_title").val("");
+        $("#edit_input_notes").val("");
+    }
+
+    function resetEditSelectChord() {
+        var chords = mycontext["edit_chord_set"].chords;
+        $("#edit_select_chord *").remove();
+        $("#edit_select_chord").append("<option value='-1'></option>");
+        for ( var j = 0; j < chords.length; j++) {
+            $("#edit_select_chord").append("<option value='VALUE'>LABEL</option>".replace("VALUE", j).replace("LABEL", chords[j].name));
+        }   
+    }
+
+    function setChordInfo() {
+        var idx = $("#edit_select_chord").val();
+        
+        if (idx == -1) {
+            $("#edit_input_title").val("");
+            $("#edit_input_notes").val("");
+            return ;
+        }
+
+        var notes = $("#edit_input_notes").val();
+        if (notes == null || notes == "") {
+            return;
+        }
+        notes = notes.replace(" ", "");
+        
+        var chord_title = $("#edit_input_title").val();
+        if (chord_title == null || chord_title == "") {
+            return;
+        }
+        
+        // split the value with ","
+        var notes_ary = notes.split(",");
+        // check each elem's format
+        for (var i = 0; i < notes_ary.length; i++) {
+            var note = notes_ary[i];
+            var alphabet = note.replace(/([A-Z#]+)([0-9]+)/,"$1");
+            var octave = note.replace(/([A-Z#]+)([0-9]+)/,"$2");
+            
+            if (alphabet == "" || octave == "") {
+                alert("illigal format");
+                return;
+            }
+        }
+        
+        // set the value into chordset
+        //var idx = mycontext["edit_chord_idx"];
+
+        mycontext["edit_chord_set"].chords[idx] = {
+            "name": chord_title,
+            "notes" : notes_ary
+        };
+        
+        resetEditSelectChord();
+
+        // select created chord
+        $("#edit_select_chord").val(idx).selectmenu('refresh');
+
+    }
+
+    function setTitleNotesFromRootType() {
+        var root_idx = $("#edit_select_root").val();
+        root_idx = parseInt(root_idx);
+         // value check
+        if (root_idx != root_idx || root_idx === -1) {
+           return;
+        }
+        
+        var chordtype_idx = $("#edit_select_chordtype").val();
+        chordtype_idx = parseInt(chordtype_idx);
+         // value check
+        if (chordtype_idx != chordtype_idx || chordtype_idx === -1) {
+           return;
+        }
+        
+        var chord_idx = $("#edit_select_chord").val();
+        if (chord_idx === "-1") {
+            return;
+        }
+        
+        var root_str = mycontext.notes[root_idx];
+        
+        // set root_idx on the 4 octave
+        root_idx = 4 * 12 + root_idx;
+        
+        var chordtype = mycontext.chordtypes[chordtype_idx];
+        var chordtype_str = chordtype[0];
+        
+        var note_ary = [];
+        for (var i = 1; i < chordtype.length; i++) {
+            var note_idx = root_idx + chordtype[i];
+            var note_str = mycontext.notes[note_idx % 12];
+            var note_octave = Math.floor(note_idx / 12);
+            note_ary.push(note_str + note_octave);
+        }
+        
+        // set value
+        $("#edit_input_title").val(root_str + chordtype_str);
+        $("#edit_input_notes").val(note_ary.join(","));
+    }
+
+    try{
+        $(document).ready(function(){
+        
+
+            // init chordsets
+            if (localStorage.getItem("chordsets") != null) {
+                mycontext.chordsets = JSON.parse(localStorage.getItem("chordsets"));
+            } else {
+                // delete all chordset
+                mycontext.chordsets.splice(0, mycontext.chordsets.length);
+                // copy  default chordsets into chordsets
+                for (var i = 0; i < mycontext.default_chordsets.length; i++) {
+                    var chordset = mycontext.default_chordsets[i];
+                    var copy = $.extend(true, {}, chordset);
+                    mycontext.chordsets.push(copy);
+                }
+            }
+
+            $(document).on("pagecontainershow", function(event, ui){
+                console.log("pagecontainershow");
+                //console.log(event);
+                //console.log(ui);
+                if (ui.toPage[0].id == "top") {
+                    var current_chord_set = mycontext["current_chord_set"];
+                    if (current_chord_set == null) {
+                        current_chord_set = "0";
+                    }
+                    // reset chordsets select
+                    initTopSelectChordset();
+                    $("#top_chordset").val(current_chord_set).selectmenu('refresh');
+                }
+
+            });
+
+            // ---- top page
+
+            // initialize select chordset
+            initTopSelectChordset();
+            $("#top_chordset").val("0").selectmenu('refresh');
+
+            // ADD NEW CHORD SET
+            $("#top_add_chordset").on("click", function() {
+                var new_chordset = {"name": "new chord set", "chords" : []};
+                mycontext.chordsets.push(new_chordset);
+                
+                initTopSelectChordset();
+                $("#top_chordset").val("" + (mycontext.chordsets.length - 1)).selectmenu("refresh");
+            });
+
+            // DELETE CHORD SET
+            $("#top_del_chordset").on("click", function() {
+                var chordset_idx = $("#top_chordset").val();
+                chordset_idx = parseInt(chordset_idx);
+                
+                // delete chord set
+                mycontext.chordsets.splice(chordset_idx, 1);
+                
+                // re-select chord set
+                chordset_idx = Math.min(chordset_idx, mycontext.chordsets.length - 1);
+                initTopSelectChordset();
+                $("#top_chordset").val("" + chordset_idx).selectmenu("refresh");
+            });
+            
+            $("a[href='#play']").on('click', function() {
+                mycontext["current_chord_set"] = $("#top_chordset").val();
+                initPlayPage();
+            });
+
+            $("a[href='#edit']").on('click', function() {
+                mycontext["current_chord_set"] = $("#top_chordset").val();
+                initEditPage();
+            });
+
+            // SAVE CHORD SETS TO LOCAL
+            $("#save_local").on("click", function() {
+                // stringify chordset
+                var chordsets = mycontext.chordsets;
+                if (chordsets == null) {
+                    return;
+                }
+                var data = JSON.stringify(chordsets);
+                
+                // save date into local storage
+                localStorage.setItem("chordsets", data);
+            });
+            
+            // RESET LOCAL CHORD SETS
+            $("#reset_local").on("click", function() {
+                // remove chordsets data
+                localStorage.removeItem("chordsets");
+                
+                // copy  default chordsets into chordsets
+                mycontext.chordsets = [];
+                for (var i = 0; i < mycontext.default_chordsets.length; i++ ) {
+                    var chord = $.extend(true, {}, mycontext.default_chordsets[i]);
+                    mycontext.chordsets.push(chord);
+                }
+                
+                // 
+                if (mycontext["current_chord_set"] == null) {
+                    mycontext["current_chord_set"] = "0";
+                }
+                // reset chordsets select
+                initTopSelectChordset();
+                $("#top_chordset").val(mycontext["current_chord_set"]).selectmenu('refresh');
+            });
+
+            // ---- play page
+            
+            
+            // ---- edit page
+            // CHORDSET NAME
+            $("#edit_input_chordset_name").on("focusout", function() {
+                var chordset_name = $("#edit_input_chordset_name").val();
+                if (mycontext["edit_chord_set"] != null) {
+                    mycontext["edit_chord_set"].name = chordset_name;
+                }
+            });
+            
+            // CHORD
+            $("#edit_select_chord").on("change", function() {
+                var idx = $("#edit_select_chord").val();
+                
+                if (idx === "-1") {
+                    $("#edit_input_title").val("");
+                    $("#edit_input_notes").val("");
+                    return ;
+                }
+                
+                var chord = mycontext["edit_chord_set"].chords[idx];
+                console.log(chord);
+                $("#edit_input_title").val(chord.name);
+                
+                var str = "";
+                str = chord.notes.join(",");
+                $("#edit_input_notes").val(str);
+                
+                console.log("edit_select_chord change");
+            });
+
+            // TITLE
+            $("#edit_input_title").on("focusout", function() {
+                setChordInfo();
+                console.log("edit_input_title focusout");
+            });
+
+            // NOTES
+            $("#edit_input_notes").on("focusout", function() {
+                setChordInfo();
+                console.log("edit_input_notes focusout");
+            });
+
+            // ADD
+            $("#edit_button_add").on("click", function() {
+            
+                // add new chord object
+                //var idx = mycontext["edit_chord_idx"];
+                var idx = $("#edit_select_chord").val();
+                idx = parseInt(idx);
+                // check if idx is NaN
+                if (idx !== idx) {
+                    idx = -1;
+                }
+                
+                idx = idx + 1;
+                mycontext["edit_chord_set"].chords.splice(idx, 0, {"name":"new", "notes":[]});
+
+                // reset edit_select_chord
+                resetEditSelectChord();
+
+                // select created chord
+                $("#edit_select_chord").val(idx).selectmenu('refresh');
+
+                // set chord name
+                var chords = mycontext["edit_chord_set"].chords;
+                $("#edit_input_title").val(chords[idx].name);
+                $("#edit_input_notes").val(chords[idx].notes == null ? "" : chords[idx].notes.join(","));
+                
+                console.log("edit_button_add click");
+            });
+                
+            // DEL
+            $("#edit_button_del").on("click", function() {
+                console.log("del");
+                var idx = $("#edit_select_chord").val();
+                idx = parseInt(idx);
+                // check if idx is NaN
+                if (idx !== idx) {
+                    idx = -1;
+                }
+                if (idx == -1) {
+                    return;
+                }
+                
+                
+                // remove a chord
+                mycontext["edit_chord_set"].chords.splice(idx, 1);
+
+                // reset edit_select_chord
+                resetEditSelectChord();
+
+                if (idx >= mycontext["edit_chord_set"].chords.length) {
+                    idx = mycontext["edit_chord_set"].chords.length -1;
+                }
+
+                // select created chord
+                $("#edit_select_chord").val(idx).selectmenu('refresh');
+
+                if (idx >= 0) {
+                    // set chord name
+                    var chords = mycontext["edit_chord_set"].chords;
+                    $("#edit_input_title").val(chords[idx].name);
+                    $("#edit_input_notes").val(chords[idx].notes == null ? "" : chords[idx].notes.join(","));
+                } else {
+                    $("#edit_input_title").val("");
+                    $("#edit_input_notes").val("");
+                }
+
+                
+                console.log("edit_button_del click");
+            });
+                
+            // ROOT
+            $("#edit_select_root").on("change", function() {
+                setTitleNotesFromRootType();
+                console.log("edit_select_root change");
+            });
+            
+            // TYPE
+            $("#edit_select_chordtype").on("change", function() {
+                setTitleNotesFromRootType();
+                console.log("edit_select_chordtype change");
+            });
+                
+            // SAVE
+             $("#edit_button_save").on("click", function() {
+                saveChordset();
+                console.log("edit_button_save click");
+            });
+                           
+            // RESET
+            $("#edit_button_reset").on("click", function() {
+                resetChordset();
+                $("#edit_select_chord").val(-1).selectmenu('refresh');
+                $("#edit_select_root").val(-1).selectmenu('refresh');
+                $("#edit_select_chordtype").val(-1).selectmenu('refresh'); 
+                console.log("edit_button_reset click");
+            });
+        });
+    } catch (e) {
+        alert(e);
+    }
+    
+    </script>
+
 </head>
+
 <body>
-<h1>CHORD PAD</h1>
+
+
+<div data-role="page" id="top">
+
+	<div data-role="header">
+		<h1>TOP</h1>
+	</div><!-- /header -->
+
+	<div role="main" class="ui-content">
+	
+        <label for="top_chordset">CHORD SET:</label>
+        <select name="top_chordset" id="top_chordset">
+        </select>
+		<p><input type="button" id="top_add_chordset" value="ADD NEW CHORD SET"/></p>
+		<p><input type="button" id="top_del_chordset" value="DELETE CHORD SET"/></p>
+		<p><a href="#play" class="ui-btn">PLAY</a></p>
+		<p><a href="#edit" class="ui-btn">EDIT</a></p>
+		<p><input type="button" id="save_local" value="SAVE CHORD SETS TO LOCAL"/></p>
+		<p><input type="button" id="reset_local" value="RESET LOCAL CHORD SETS"/></p>
+
+	</div><!-- /content -->
+</div><!-- /page -->
+
+<div data-role="page" id="play">
+	<div data-role="header">
+		<h1>PLAY</h1>
+	</div><!-- /header -->
+
+	<div role="main" class="ui-content">
+        <div id="play-buttons">
+        </div>
+        
+        <p><a href="#top" class="ui-btn">back</a><p>
+	</div><!-- /content -->
+
+</div><!-- /page -->
+
+<div data-role="page" id="edit">
+	<div data-role="header">
+		<h1>EDIT</h1>
+	</div><!-- /header -->
+
+	<div role="main" class="ui-content">
+        
+        <label for="edit_input_chordset_name">CHORDSET NAME:</label>
+        <input name="edit_input_chordset_name" id="edit_input_chordset_name" value="">
+
+        <div class="ui-grid-a">
+            <div class="ui-block-a"><input id="edit_button_save" type="button" value="SAVE"/></div>
+            <div class="ui-block-b"><input id="edit_button_reset" type="button" value="RESET"/></div>
+        </div>
+
+        
+        <label for="edit_select_chord">CHORD:</label>
+        <select name="edit_select_chord" id="edit_select_chord">
+        </select>
+
+<!--
+        <div class="ui-grid-c">
+            <div class="ui-block-a"><input id="edit_button_add" type="button" value="ADD"/></div>
+            <div class="ui-block-b"><input id="edit_button_del" type="button" value="DEL"/></div>
+            <div class="ui-block-c"><input id="edit_button_sharp_all" type="button" value="#ALL"/></div>
+            <div class="ui-block-d"><input id="edit_button_flat_all" type="button" value="bALL"/></div>
+        </div>
+-->
+        <div class="ui-grid-a">
+            <div class="ui-block-a"><input id="edit_button_add" type="button" value="ADD"/></div>
+            <div class="ui-block-b"><input id="edit_button_del" type="button" value="DEL"/></div>
+        </div>
+
+        <label for="edit_input_title">TITLE:</label>
+        <input name="edit_input_title" id="edit_input_title" value="">
+
+        <label for="edit_input_notes">NOTES:</label>
+        <input name="edit_input_notes" id="edit_input_notes" value="">
+
+<!--
+        <div class="ui-grid-a">
+            <div class="ui-block-a"><input id="edit_button_sharp" type="button" value="#"/></div>
+            <div class="ui-block-b"><input id="edit_button_flat" type="button" value="b"/></div>
+        </div>
+-->
+        
+        <label for="edit_select_root">ROOT:</label>
+        <select name="edit_select_root" id="edit_select_root">
+        </select>
+        
+        <label for="edit_select_chordtype">TYPE:</label>
+        <select name="edit_select_chordtype" id="edit_select_chordtype">
+        </select>
+
+        
+        <p><a href="#top" class="ui-btn">back</a><p>
+	</div><!-- /content -->
+</div><!-- /page -->
 </body>
 </html>
