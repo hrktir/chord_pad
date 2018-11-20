@@ -6,7 +6,7 @@ You can also edit a chord set to play a song you.
 
 ## HOW TO PLAY
 
-1. open [the TOP page of CHORD PAD](https://jbt.github.io/markdown-editor/), choose CHORDSET and touch PLAY button.
+1. open [the TOP page of CHORD PAD](https://hrktir.github.io/chord_pad/), choose CHORDSET and touch PLAY button.
 2. touch buttons to play a sound.
 3. touch BACK button to go back to the TOP page.
 
